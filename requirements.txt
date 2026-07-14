@@ -24,7 +24,7 @@ dj-database-url==3.0.1
 Django==5.0.14
 django-celery-beat==2.9.0
 django-cors-headers==4.9.0
-django-filter==25.2
+django-filter==24.3
 django-smart-ratelimit==0.8.11
 django-timezone-field==7.2.2
 Django-Verify-Email==3.0.3
