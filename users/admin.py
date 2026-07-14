@@ -29,7 +29,7 @@ class UserAdmin(DjangoUserAdmin):
 class VendorAdmin(admin.ModelAdmin):
     list_display = ('name', 'plan', 'subscription_ends_at', 'created_at', 'updated_at')
     search_fields = ('name',)
-    list_filter = ('plan', 'created_at', 'is_active')
+    list_filter = ('plan', 'created_at')
 
 
 @admin.register(SubscriptionPlan)
