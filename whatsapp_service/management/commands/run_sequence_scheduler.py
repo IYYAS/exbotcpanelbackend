@@ -136,7 +136,7 @@ class Command(BaseCommand):
                     )
                     delivery.save()
                     self.stdout.write(self.style.WARNING(
-                        f'  [OUTSIDE 24h] No fallback template for node {node_id} — skipped'
+                        f'  [OUTSIDE 24h] No fallback template for node {node_id} - skipped'
                     ))
                     return
 

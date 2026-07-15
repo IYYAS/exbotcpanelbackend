@@ -325,13 +325,13 @@ class WhatsAppClient:
         url = f"{self.base_url}{endpoint}"
         import json
 
-        print(f"\n{'─'*60}")
-        print(f"[Meta API Request] {method} → {url}")
+        print(f"\n{'-'*60}")
+        print(f"[Meta API Request] {method} -> {url}")
         if params:
             print(f"[Query Params] {json.dumps(params, indent=2)}")
         if payload:
             print(f"[Body Payload] {json.dumps(payload, indent=2)}")
-        print(f"{'─'*60}")
+        print(f"{'-'*60}")
 
         headers = self.headers.copy()
         if files:

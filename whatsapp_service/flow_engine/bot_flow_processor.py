@@ -195,7 +195,7 @@ class BotFlowProcessor:
                                         queued_any = True
 
                 if not queued_any:
-                    print(f"    No branch node found for '{branch_key}' — check your flow connections!")
+                    print(f"    No branch node found for '{branch_key}' - check your flow connections!")
 
                 continue  # Skip default output queueing
 

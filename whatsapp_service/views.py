@@ -565,7 +565,7 @@ class SendMessageAPIView(APIView):
             if local_template and local_template.status and local_template.status.upper() != 'APPROVED':
                 return Response({
                     'success': False,
-                    'error': f'Template "{template_name}" has status "{local_template.status}" — only APPROVED templates can be sent. Please wait for Meta approval or sync templates.',
+                    'error': f'Template "{template_name}" has status "{local_template.status}" - only APPROVED templates can be sent. Please wait for Meta approval or sync templates.',
                 }, status=400)
             
             result = client.send_template_message(to_id, template_name, language_code, components=components, reply_to_message_id=reply_to_message_id)

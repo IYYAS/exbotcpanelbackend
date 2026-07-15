@@ -424,7 +424,7 @@ class ButtonHandler:
     def execute(self, client, wa_id, node, vendor, nodes=None, flow=None):
         node_id = node.get('id', '')
         name = node.get('name', 'Button Node')
-        print(f"    Executing button node '{name}' ({node_id}) — routing to connected node(s)")
+        print(f"    Executing button node '{name}' ({node_id}) - routing to connected node(s)")
         # Button nodes do not send a WhatsApp message themselves; they simply route execution.
         # Actual message delivery should occur in the next connected node(s).
         return
@@ -743,6 +743,6 @@ class FlowEngine:
                 handler_cls().execute(client, wa_id, node, vendor, nodes, flow)
                 return
 
-        print(f"    Unknown node type '{ntype}' — skipped")
+        print(f"    Unknown node type '{ntype}' - skipped")
 
 

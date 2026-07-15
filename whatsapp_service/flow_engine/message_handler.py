@@ -212,7 +212,7 @@ class MessageHandler:
         address   = loc.get('address', '')
 
         if name and address:
-            return f"{name} — {address}"
+            return f"{name} - {address}"
         if name:
             return f"{name}"
         if latitude and longitude:
