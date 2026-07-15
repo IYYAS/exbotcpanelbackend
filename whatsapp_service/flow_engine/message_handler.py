@@ -31,18 +31,18 @@ class MessageHandler:
         wa_id    = msg.get('from', '')
         msg_type = msg.get('type', 'text')
         msg_id   = msg.get('id', '')
-        print(f"\n🔄 Message from {wa_id}, type={msg_type}, id={msg_id}, vendor={vendor.name if vendor else 'NONE'}")
+        print(f"\nMessage from {wa_id}, type={msg_type}, id={msg_id}, vendor={vendor.name if vendor else 'NONE'}")
 
         contact = self._resolve_contact(msg, vendor, wa_id, contacts)
         msg_body, attachment_path = self._extract_body_and_attachment(msg, msg_type, vendor)
 
         # Save the incoming message for the primary vendor
         is_new = self._log_message(msg, vendor, contact, wa_id, msg_type, msg_body, attachment_path)
-        print(f"📌 Primary log saved: vendor={vendor.name if vendor else 'NONE'}, contact={contact}, wa_id={wa_id!r}, msg_id={msg_id!r}")
+        print(f"Primary log saved: vendor={vendor.name if vendor else 'NONE'}, contact={contact}, wa_id={wa_id!r}, msg_id={msg_id!r}")
         # Also save the same incoming message for other vendors sharing this phone number
         self._log_message_to_shared_vendors(msg, vendor, wa_id, msg_type, msg_body, attachment_path)
         if not is_new:
-            print(f"\u26a0️  Duplicate wamid={msg_id!r} — already logged, skipping bot flow")
+            print(f"Duplicate wamid={msg_id!r} — already logged, skipping bot flow")
             return
 
         self._update_contact_activity(contact)
@@ -52,7 +52,7 @@ class MessageHandler:
             try:
                 self._processor.process(wa_id, msg, vendor, contact)
             except Exception as flow_err:
-                print(f"⚠️  Bot flow error: {flow_err}")
+                print(f"Bot flow error: {flow_err}")
                 logger.error(f"Bot flow processing error: {flow_err}")
 
     # ── Private helpers ──────────────────────────────────────────────────────
@@ -60,9 +60,9 @@ class MessageHandler:
     def _resolve_contact(self, msg: dict, vendor, wa_id: str, contacts: list[dict] | None = None):
         """Get or create a Contact, updating name if needed from webhook profile data.
         Also ensures the contact is created for ALL vendors sharing the same phone_number_id."""
-        print(f"🧩 _resolve_contact payload msg.contacts={msg.get('contacts')} top_contacts={contacts}")
+        print(f"_resolve_contact payload msg.contacts={msg.get('contacts')} top_contacts={contacts}")
         display_name = self._get_webhook_contact_name(msg, contacts)
-        print(f"🧩 extracted display_name={display_name!r}")
+        print(f"extracted display_name={display_name!r}")
         first_name, last_name = self._split_contact_name(display_name or "WhatsApp User")
 
         # ── 1. Resolve/create contact for the PRIMARY vendor ─────────────────
@@ -77,9 +77,9 @@ class MessageHandler:
         )
 
         if created:
-            print(f"✅ Created contact {wa_id} with first_name={first_name!r}, last_name={last_name!r}")
+            print(f"Created contact {wa_id} with first_name={first_name!r}, last_name={last_name!r}")
         else:
-            print(f"🔄 Resolved existing contact {wa_id} current_name={contact.first_name!r} {contact.last_name!r} webhook_name={display_name!r}")
+            print(f"Resolved existing contact {wa_id} current_name={contact.first_name!r} {contact.last_name!r} webhook_name={display_name!r}")
             if display_name and display_name != "WhatsApp User":
                 should_update = (
                     contact.first_name != first_name or
@@ -91,7 +91,7 @@ class MessageHandler:
                     contact.first_name = first_name
                     contact.last_name = last_name
                     contact.save(update_fields=['first_name', 'last_name'])
-                    print(f"🔄 Updated contact {wa_id} to first_name={first_name!r}, last_name={last_name!r}")
+                    print(f"Updated contact {wa_id} to first_name={first_name!r}, last_name={last_name!r}")
 
         # ── 2. Sync contact to ALL OTHER vendors sharing the same phone_number_id ──
         try:
@@ -113,7 +113,7 @@ class MessageHandler:
                         }
                     )
                     if sv_created:
-                        print(f"✅ Created contact {wa_id} for shared vendor '{shared_vendor.name}'")
+                        print(f"Created contact {wa_id} for shared vendor '{shared_vendor.name}'")
                     else:
                         # Update name if needed
                         if display_name and display_name != "WhatsApp User":
@@ -127,9 +127,9 @@ class MessageHandler:
                                 sv_contact.first_name = first_name
                                 sv_contact.last_name = last_name
                                 sv_contact.save(update_fields=['first_name', 'last_name'])
-                                print(f"🔄 Synced contact {wa_id} name for shared vendor '{shared_vendor.name}'")
+                                print(f"Synced contact {wa_id} name for shared vendor '{shared_vendor.name}'")
         except Exception as sync_err:
-            print(f"⚠️ Shared vendor contact sync error: {sync_err}")
+            print(f"Shared vendor contact sync error: {sync_err}")
 
         return contact
 
@@ -155,7 +155,7 @@ class MessageHandler:
                         return name
                 return contact_info.get('name')
         except Exception as ex:
-            print(f"⚠️ _get_webhook_contact_name error: {ex}")
+            print(f"_get_webhook_contact_name error: {ex}")
         return None
 
     def _split_contact_name(self, display_name: str):
@@ -190,7 +190,7 @@ class MessageHandler:
             contacts_list = msg.get('contacts', [])
             names = [c.get('name', {}).get('formatted_name', '') for c in contacts_list]
             names_str = ', '.join([n for n in names if n])
-            msg_body = f"📇 Contact Card: {names_str}" if names_str else "📇 Contact Card"
+            msg_body = f"Contact Card: {names_str}" if names_str else "Contact Card"
 
         elif msg_type == 'location':
             msg_body = self._format_location(msg.get('location', {}))
@@ -212,12 +212,12 @@ class MessageHandler:
         address   = loc.get('address', '')
 
         if name and address:
-            return f"📍 {name} — {address}"
+            return f"{name} — {address}"
         if name:
-            return f"📍 {name}"
+            return f"{name}"
         if latitude and longitude:
-            return f"📍 Location ({latitude}, {longitude})"
-        return "📍 Location shared"
+            return f"Location ({latitude}, {longitude})"
+        return "Location shared"
 
     def _download_media(self, media_id: str, msg_type: str, vendor) -> str | None:
         """
@@ -292,7 +292,7 @@ class MessageHandler:
                 data={**msg, 'debug_reason': 'missing_message_id'}
             )
             print(
-                f"✅ poda Message logged without wamid: vendor={vendor}, contact={contact}, "
+                f"poda Message logged without wamid: vendor={vendor}, contact={contact}, "
                 f"wa_id={wa_id!r}, type={msg_type}, body={msg_body!r}, "
                 f"log_id={new_log.id}, messaged_at={new_log.messaged_at}"
             )
@@ -315,14 +315,14 @@ class MessageHandler:
         )
         if created:
             print(
-                f"✅ poda Message logged: vendor={vendor}, contact={contact}, "
+                f"poda Message logged: vendor={vendor}, contact={contact}, "
                 f"wa_id={wa_id!r}, msg_id={message_id!r}, type={msg_type}, "
                 f"body={msg_body!r}, payload_ts={msg.get('timestamp')!r}, "
                 f"log_id={log.id}, messaged_at={log.messaged_at}"
             )
         else:
             print(
-                f"⚠️  Duplicate message skipped: wamid={message_id!r}, "
+                f"Duplicate message skipped: wamid={message_id!r}, "
                 f"existing_log_id={log.id}, messaged_at={log.messaged_at}"
             )
         return created
@@ -379,12 +379,12 @@ class MessageHandler:
 
                 if created:
                     print(
-                        f"✅ Shared vendor message logged: vendor={shared_vendor}, "
+                        f"Shared vendor message logged: vendor={shared_vendor}, "
                         f"contact={shared_contact}, wa_id={wa_id!r}, msg_id={message_id!r}, "
                         f"shared_log_id={shared_log.id}"
                     )
         except Exception as ex:
-            print(f"⚠️ Shared vendor log error: {ex}")
+            print(f"Shared vendor log error: {ex}")
 
     def _update_contact_activity(self, contact):
         """Increment unread count and update last activity timestamp."""

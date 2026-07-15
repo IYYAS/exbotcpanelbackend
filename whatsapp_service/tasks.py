@@ -24,17 +24,17 @@ def _step_delay_seconds(step):
 
 @shared_task
 def process_due_sequence_steps():
-    print('🔄 process_due_sequence_steps running at', timezone.now())
+    print('process_due_sequence_steps running at', timezone.now())
     due = SequenceSubscription.objects.filter(
         status='active', next_run_at__lte=timezone.now()
     ).select_related('current_step', 'sequence', 'contact', 'sequence__vendor')
-    print(f'  🔎 Found {due.count()} due sequence subscriptions')
+    print(f'  Found {due.count()} due sequence subscriptions')
 
     for sub in due:
         step = sub.current_step
-        print(f'  ▶️ Processing subscription {sub.id} contact={sub.contact.wa_id} sequence={sub.sequence.name} current_step={getattr(step, "order", None)} next_run_at={sub.next_run_at}')
+        print(f'  Processing subscription {sub.id} contact={sub.contact.wa_id} sequence={sub.sequence.name} current_step={getattr(step, "order", None)} next_run_at={sub.next_run_at}')
         if not step:
-            print('    ⚠️  Subscription has no current step; marking completed')
+            print('    Subscription has no current step; marking completed')
             sub.status = 'completed'
             sub.save()
             continue
@@ -56,7 +56,7 @@ def process_due_sequence_steps():
             already_sent = False
             for r in recent:
                 if _norm(r.message_body) == _norm(step.message_body):
-                    print(f"    ⚠️  Skipping send: identical message recently sent at {r.messaged_at}")
+                    print(f"    Skipping send: identical message recently sent at {r.messaged_at}")
                     already_sent = True
                     break
 
@@ -65,8 +65,8 @@ def process_due_sequence_steps():
             else:
                 result = client.send_message(sub.contact.wa_id, step.message_body)
                 _log_outgoing_message(sub.contact.wa_id, sub.sequence.vendor, 'text', step.message_body, result)
-            print(f'    ✅ Sent sequence message for sub {sub.id}: {step.message_body!r}')
-            print(f'    📤 send_message result: {result}')
+            print(f'    Sent sequence message for sub {sub.id}: {step.message_body!r}')
+            print(f'    send_message result: {result}')
             # Optional follow-up payload: send extra text and/or media immediately
             try:
                 step_data = getattr(step, 'data', {}) or {}
@@ -76,13 +76,13 @@ def process_due_sequence_steps():
                     if isinstance(follow, str):
                         result = client.send_message(sub.contact.wa_id, follow)
                         _log_outgoing_message(sub.contact.wa_id, sub.sequence.vendor, 'text', follow, result)
-                        print(f"    ✉️  Sent follow-up text for sub {sub.id}: {follow!r}")
+                        print(f"    Sent follow-up text for sub {sub.id}: {follow!r}")
                     elif isinstance(follow, dict):
                         ftext = follow.get('text')
                         if ftext:
                             result = client.send_message(sub.contact.wa_id, ftext)
                             _log_outgoing_message(sub.contact.wa_id, sub.sequence.vendor, 'text', ftext, result)
-                            print(f"    ✉️  Sent follow-up text for sub {sub.id}: {ftext!r}")
+                            print(f"    Sent follow-up text for sub {sub.id}: {ftext!r}")
                         # send image/video/audio/document if provided
                         media_id = follow.get('media_id')
                         media_url = follow.get('media_url')
@@ -100,13 +100,13 @@ def process_due_sequence_steps():
                                     result,
                                     attachment=media_id or media_url
                                 )
-                                print(f"    🖼️  Sent follow-up media ({media_type}) for sub {sub.id}")
+                                print(f"    Sent follow-up media ({media_type}) for sub {sub.id}")
                             except Exception as em:
-                                print(f"    ❌ Failed to send follow-up media for sub {sub.id}: {em}")
+                                print(f"    Failed to send follow-up media for sub {sub.id}: {em}")
             except Exception as fe:
-                print(f'    ⚠️  Follow-up send failed for sub {sub.id}: {fe}')
+                print(f'    Follow-up send failed for sub {sub.id}: {fe}')
         except Exception as exc:
-            print(f'    ❌ Failed to send sequence message for sub {sub.id}: {exc}')
+            print(f'    Failed to send sequence message for sub {sub.id}: {exc}')
             sub.status = 'completed'
             sub.next_run_at = None
             sub.save()
@@ -126,7 +126,7 @@ def process_due_sequence_steps():
                         nodes = {str(n.get('id')): n for n in nodes}
                     child_node = nodes.get(str(child_next)) or nodes.get(int(child_next) if str(child_next).isdigit() else None)
                     if child_node:
-                        print(f"    🔁 Executing connected live-flow node {child_next} from flow {flow_pk}")
+                        print(f"    Executing connected live-flow node {child_next} from flow {flow_pk}")
                         engine = FlowEngine()
                         bot_proc = BotFlowProcessor(engine)
                         # Avoid double-send: if the child node is a Text node and its
@@ -140,7 +140,7 @@ def process_due_sequence_steps():
                             def _norm(s):
                                 return ' '.join(str(s or '').split()).strip().lower()
                             if child_text and _norm(child_text) == _norm(step.message_body or ''):
-                                print(f"    ⚠️  Skipping duplicate send for child text node {child_next}")
+                                print(f"    Skipping duplicate send for child text node {child_next}")
                                 next_ids = bot_proc._get_next_ids(child_node)
                                 bot_proc._walk_and_execute(next_ids, nodes, sub.contact.wa_id, sub.sequence.vendor, flow, client)
                             else:
@@ -152,15 +152,15 @@ def process_due_sequence_steps():
                             next_ids = bot_proc._get_next_ids(child_node)
                             bot_proc._walk_and_execute(next_ids, nodes, sub.contact.wa_id, sub.sequence.vendor, flow, client)
         except Exception as e:
-            print(f'    ⚠️  Failed to execute connected live-flow nodes: {e}')
+            print(f'    Failed to execute connected live-flow nodes: {e}')
 
         next_step = sub.sequence.steps.filter(order__gt=step.order).first()
         if next_step:
             sub.current_step = next_step
             sub.next_run_at = timezone.now() + timedelta(seconds=_step_delay_seconds(next_step))
-            print(f'    ⏭ Scheduled next step {next_step.id} in {sub.next_run_at}')
+            print(f'    Scheduled next step {next_step.id} in {sub.next_run_at}')
         else:
-            print(f'    🎉 No next step; completing subscription {sub.id}')
+            print(f'    No next step; completing subscription {sub.id}')
             sub.status = 'completed'
             sub.next_run_at = None
         sub.save()

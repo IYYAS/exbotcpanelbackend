@@ -27,14 +27,14 @@ class WhatsAppClient:
                 self.waba_id = self.waba_id or v_settings.whatsapp_business_account_id
                 self.app_id = self.app_id or v_settings.whatsapp_app_id
                 print(f"\n{'='*60}")
-                print(f"[WhatsAppClient] ✅ Credentials loaded from DB (VendorSettings)")
+                print(f"[WhatsAppClient] Credentials loaded from DB (VendorSettings)")
                 print(f"  Vendor         : {vendor}")
                 print(f"  WABA ID        : {self.waba_id}")
                 print(f"  Phone Number ID: {self.phone_number_id}")
                 print(f"  Access Token   : {str(self.access_token)[:30]}... (truncated)")
                 print(f"{'='*60}")
             else:
-                print(f"\n[WhatsAppClient] ⚠️  No VendorSettings found in DB for vendor: {vendor}")
+                print(f"\n[WhatsAppClient] No VendorSettings found in DB for vendor: {vendor}")
         
         # 3. Final fallback to global settings
         self.access_token = self.access_token or getattr(settings, 'WHATSAPP_ACCESS_TOKEN', None)
@@ -44,10 +44,10 @@ class WhatsAppClient:
 
         if not vendor or not v_settings if 'v_settings' in dir() else True:
             print(f"\n{'='*60}")
-            print(f"[WhatsAppClient] 🔁 Credentials (after .env fallback)")
+            print(f"[WhatsAppClient] Credentials (after .env fallback)")
             print(f"  WABA ID        : {self.waba_id}")
             print(f"  Phone Number ID: {self.phone_number_id}")
-            print(f"  Access Token   : {str(self.access_token)[:30] if self.access_token else 'MISSING ❌'}... ")
+            print(f"  Access Token   : {str(self.access_token)[:30] if self.access_token else 'MISSING'}... ")
             print(f"{'='*60}")
 
         self.base_url = getattr(settings, 'WHATSAPP_BASE_URL', "https://graph.facebook.com/v20.0/")
@@ -227,7 +227,7 @@ class WhatsAppClient:
             payload["context"] = {"message_id": reply_to_message_id}
         
         print("\n" + "="*80)
-        print("🔥 META WHATSAPP CLOUD API - TEMPLATE PAYLOAD")
+        print("META WHATSAPP CLOUD API - TEMPLATE PAYLOAD")
         print("="*80)
         print(f"Phone Number ID: {self.phone_number_id}")
         print(f"To Number: {to_number}")

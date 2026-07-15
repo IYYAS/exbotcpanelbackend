@@ -47,10 +47,10 @@ class WhatsAppWebhookView(View):
         challenge = request.GET.get('hub.challenge')
         verify_token = getattr(settings, 'WHATSAPP_VERIFY_TOKEN', 'service-whatsapp-token')
 
-        print(f"\n🔐 WEBHOOK VERIFY: mode={mode}, token_received={token}, token_expected={verify_token}, match={token == verify_token}")
+        print(f"\nWEBHOOK VERIFY: mode={mode}, token_received={token}, token_expected={verify_token}, match={token == verify_token}")
 
         if mode == 'subscribe' and token == verify_token:
-            logger.info("Webhook verified successfully! ✔")
+            logger.info("Webhook verified successfully")
             return HttpResponse(challenge)
         return HttpResponse('Forbidden', status=403)
 
@@ -58,7 +58,7 @@ class WhatsAppWebhookView(View):
         try:
             data = json.loads(request.body)
             print("\n" + "="*80)
-            print("📬 [WEBHOOK EVENT RECEIVED FROM META]")
+            print("[WEBHOOK EVENT RECEIVED FROM META]")
             print(json.dumps(data, indent=2))
             print("="*80 + "\n")
             logger.info(f"Unified Webhook POST: {json.dumps(data, indent=2)}")
@@ -68,17 +68,17 @@ class WhatsAppWebhookView(View):
             try:
                 metadata = data.get('entry', [{}])[0].get('changes', [{}])[0].get('value', {}).get('metadata', {})
                 phone_id = metadata.get('phone_number_id')
-                print(f"📌 Looking for vendor with phone_id={phone_id}")
+                print(f"Looking for vendor with phone_id={phone_id}")
                 if phone_id:
                     v_settings = VendorSettings.objects.filter(whatsapp_phone_number_id=phone_id).first()
                     if v_settings:
                         vendor = v_settings.vendor
-                        print(f"✅ Found vendor: {vendor.name}")
+                        print(f"Found vendor: {vendor.name}")
                     else:
                         available = list(VendorSettings.objects.values_list('whatsapp_phone_number_id', flat=True))
-                        print(f"❌ Vendor NOT found. Available phone_ids: {available}")
+                        print(f"Vendor not found. Available phone_ids: {available}")
             except Exception as e:
-                print(f"❌ Error identifying vendor: {e}")
+                print(f"Error identifying vendor: {e}")
                 logger.warning(f"Could not identify vendor from webhook: {e}")
 
             entries = data.get('entry', [])
@@ -89,13 +89,13 @@ class WhatsAppWebhookView(View):
                     # Incoming messages
                     messages = value.get('messages', [])
                     if messages:
-                        print(f"📨 Processing {len(messages)} message(s)")
+                        print(f"Processing {len(messages)} message(s)")
                     for msg in messages:
                         self.handle_whatsapp_message(msg, vendor, top_level_contacts)
                     # Status updates
                     statuses = value.get('statuses', [])
                     if statuses:
-                        print(f"📊 Processing {len(statuses)} status update(s)")
+                        print(f"Processing {len(statuses)} status update(s)")
                     for st in statuses:
                         WhatsAppMessageLog.objects.filter(wamid=st.get('id')).update(status=st.get('status', 'unknown'))
 
@@ -438,7 +438,7 @@ class MediaUploadAPIView(APIView):
             upload_filename = filename
             upload_mime = file_obj.content_type
 
-            # ✅ Always convert voice recordings to real ogg/opus for Meta
+            # Always convert voice recordings to real ogg/opus for Meta
             if 'audio' in file_obj.content_type or 'video/webm' in file_obj.content_type:
                 ogg_filename = filename.rsplit('.', 1)[0] + '.ogg'
                 ogg_rel_path = os.path.join('whatsapp', 'uploads', ogg_filename)
@@ -577,7 +577,7 @@ class SendMessageAPIView(APIView):
             msg_type = 'contacts'
             names = [c.get('name', {}).get('formatted_name', '') for c in contacts_data]
             names_str = ', '.join([n for n in names if n])
-            body = f"📇 Contact Card: {names_str}" if names_str else "📇 Contact Card"
+            body = f"Contact Card: {names_str}" if names_str else "Contact Card"
         elif media_id or media_url:
             result = client.send_media_message(to_id, msg_type, media_id=media_id, media_url=media_url, caption=body, reply_to_message_id=reply_to_message_id, voice=voice, filename=filename)
         else:
@@ -670,14 +670,14 @@ class SendTemplateAPIView(APIView):
         template_data = request.data.get('template')
 
         print("\n" + "="*80)
-        print("📤 SENDING TEMPLATE - DEBUG INFO")
+        print("SENDING TEMPLATE - DEBUG INFO")
         print("="*80)
         print(f"To Number: {to_number}")
         print(f"Template Data: {template_data}")
         print(f"Full Request Data: {request.data}")
         print("="*80 + "\n")
 
-        # ✅ COMPREHENSIVE FIELD VALIDATION WITH ERROR MESSAGES
+        # COMPREHENSIVE FIELD VALIDATION WITH ERROR MESSAGES
         if not to_number:
             return Response({
                 'success': False,
@@ -725,7 +725,7 @@ class SendTemplateAPIView(APIView):
             template_components = template_meta.get('components', []) if isinstance(template_meta.get('components', []), list) else []
             
             print("\n" + "="*80)
-            print("🔍 TEMPLATE AUTO-DETECTION DEBUG")
+            print("TEMPLATE AUTO-DETECTION DEBUG")
             print("="*80)
             print(f"Template Name: {template_name}")
             print(f"Local Template Found: {local_template is not None}")
@@ -748,7 +748,7 @@ class SendTemplateAPIView(APIView):
                     has_image_header = True
                     break
             
-            print(f"✅ Has IMAGE Header: {has_image_header}\n")
+            print(f"Has IMAGE Header: {has_image_header}\n")
             
             if has_image_header:
                 image_url = request.data.get('image_url')
@@ -766,7 +766,7 @@ class SendTemplateAPIView(APIView):
                             ]
                         }
                     ]
-                    print(f"✅ Added IMAGE header component with URL: {image_url}\n")
+                    print(f"Added IMAGE header component with URL: {image_url}\n")
                 else:
                     return Response({
                         'success': False,
@@ -784,7 +784,7 @@ class SendTemplateAPIView(APIView):
             client = WhatsAppClient(vendor=vendor)
             
             print("\n" + "="*80)
-            print("📤 CALLING CLIENT.SEND_TEMPLATE_MESSAGE")
+            print("CALLING CLIENT.SEND_TEMPLATE_MESSAGE")
             print("="*80)
             print(f"Template Name: {template_name}")
             print(f"Language: {template_data.get('language', {}).get('code', 'en_US')}")
@@ -800,7 +800,7 @@ class SendTemplateAPIView(APIView):
             )
 
             print("\n" + "="*80)
-            print("✅ TEMPLATE SEND RESULT")
+            print("TEMPLATE SEND RESULT")
             print("="*80)
             print(f"Result: {result}")
             print("="*80 + "\n")

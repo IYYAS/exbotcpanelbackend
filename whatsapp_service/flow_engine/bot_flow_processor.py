@@ -29,7 +29,7 @@ class BotFlowProcessor:
         msg_lower = msg_body.strip().lower()
         flows = self._get_active_flows(vendor)
 
-        print(f"\n🤖 Bot flow check: '{msg_body}' (btn_node_id={btn_node_id}) against {flows.count()} active flow(s)")
+        print(f"\nBot flow check: '{msg_body}' (btn_node_id={btn_node_id}) against {flows.count()} active flow(s)")
 
         if btn_node_id:
             self._resume_from_button(wa_id, btn_node_id, flows, vendor)
@@ -94,7 +94,7 @@ class BotFlowProcessor:
     def _walk_and_execute(self, start_ids: list, nodes: dict, wa_id: str, vendor, flow, client):
         """BFS walk from start_ids, executing each node via FlowEngine."""
         if flow is not None and not self._contact_allowed_for_flow(flow, vendor, wa_id):
-            print(f"    ⚠️  Skipping flow '{flow.name}' for contact {wa_id}: label mismatch")
+            print(f"    Skipping flow '{flow.name}' for contact {wa_id}: label mismatch")
             return
 
         visited = set()
@@ -109,7 +109,7 @@ class BotFlowProcessor:
 
             node = self._resolve_node(nodes, node_id)
             if not node:
-                print(f"    ⚠️  Node {node_id} not found in flow")
+                print(f"    Node {node_id} not found in flow")
                 continue
 
             ntype_lower = str(node.get('type', '')).lower()
@@ -122,7 +122,7 @@ class BotFlowProcessor:
                 delay_s = int(node_data.get('delay_seconds', 0) or 0)
                 total_delay = delay_h * 3600 + delay_m * 60 + delay_s
                 if total_delay > 0:
-                    print(f"    ⏳ Smart delay: waiting {total_delay}s before executing node {node_id} (type={ntype_lower})")
+                    print(f"    Smart delay: waiting {total_delay}s before executing node {node_id} (type={ntype_lower})")
                     time.sleep(total_delay)
             # ─────────────────────────────────────────────────────────────
 
@@ -130,7 +130,7 @@ class BotFlowProcessor:
                 try:
                     self._engine.execute_node(client, wa_id, node, flow_vendor, nodes, flow)
                 except Exception as node_err:
-                    print(f"    ❌ Error executing node {node_id}: {node_err}")
+                    print(f"    Error executing node {node_id}: {node_err}")
                     logger.error(f"Flow node execution error: {node_err}")
 
             # Stop traversal at interactive nodes — wait for user input
@@ -190,12 +190,12 @@ class BotFlowProcessor:
                                     conn_output = str(conn.get('output', '')).lower()
                                     print(f"    DEBUG: Node {t_id} input '{in_key}' has conn from {conn_node} via output='{conn_output}'")
                                     if conn_node == str(node_id) and conn_output == branch_key:
-                                        print(f"    DEBUG: ✅ Queued '{t_id}' via fallback input scan")
+                                        print(f"    DEBUG: Queued '{t_id}' via fallback input scan")
                                         exec_queue.append(t_id)
                                         queued_any = True
 
                 if not queued_any:
-                    print(f"    ⚠️  No branch node found for '{branch_key}' — check your flow connections!")
+                    print(f"    No branch node found for '{branch_key}' — check your flow connections!")
 
                 continue  # Skip default output queueing
 
@@ -261,7 +261,7 @@ class BotFlowProcessor:
             if actual_val is None:
                 actual_val = ''
 
-            print(f"    🔍 Condition check: var={var} model_field={SYSTEM_FIELD_MAP.get(var, var)} op={op} actual='{actual_val}' target='{target_val}'")
+            print(f"    Condition check: var={var} model_field={SYSTEM_FIELD_MAP.get(var, var)} op={op} actual='{actual_val}' target='{target_val}'")
 
             if op == 'equals':
                 return actual_val == target_val
@@ -317,10 +317,10 @@ class BotFlowProcessor:
 
     def _resume_from_button(self, wa_id: str, btn_node_id: str, flows, vendor):
         """Resume a flow from a button/list click."""
-        print(f"🎯 Resuming flow from button click node_id={btn_node_id}")
+        print(f"Resuming flow from button click node_id={btn_node_id}")
         for flow in flows:
             if not self._contact_allowed_for_flow(flow, vendor, wa_id):
-                print(f"    ⚠️  Skipping flow '{flow.name}' for contact {wa_id}: label mismatch")
+                print(f"    Skipping flow '{flow.name}' for contact {wa_id}: label mismatch")
                 continue
 
             nodes = self._normalise_nodes(flow.flow_data.get('nodes', {}))
@@ -329,7 +329,7 @@ class BotFlowProcessor:
 
             if btn_node_id in nodes or (btn_node_id.isdigit() and int(btn_node_id) in nodes):
                 button_node = nodes.get(btn_node_id) or nodes.get(int(btn_node_id))
-                print(f"  ✅ Found clicked button node '{button_node.get('name')}' in flow '{flow.name}'")
+                print(f"  Found clicked button node '{button_node.get('name')}' in flow '{flow.name}'")
                 client = WhatsAppClient(vendor=flow.vendor)
                 next_ids = self._get_next_ids(button_node)
                 self._walk_and_execute(next_ids, nodes, wa_id, vendor, flow, client)
@@ -339,7 +339,7 @@ class BotFlowProcessor:
         """Trigger a new flow based on keyword matching."""
         for flow in flows:
             if not self._contact_allowed_for_flow(flow, vendor, wa_id):
-                print(f"  ⚠️  Skipping flow '{flow.name}' for contact {wa_id}: label mismatch")
+                print(f"  Skipping flow '{flow.name}' for contact {wa_id}: label mismatch")
                 continue
 
             nodes = self._normalise_nodes(flow.flow_data.get('nodes', {}))
@@ -348,7 +348,7 @@ class BotFlowProcessor:
 
             trigger_node = self._find_trigger_node(nodes)
             if not trigger_node:
-                print(f"  ⚠️  Flow '{flow.name}': no trigger node found")
+                print(f"  Flow '{flow.name}': no trigger node found")
                 continue
 
             if not self._keyword_matches(trigger_node, msg_lower, flow.name):
@@ -361,10 +361,10 @@ class BotFlowProcessor:
                 from ..models import Contact
                 contact = Contact.objects.filter(vendor=vendor, wa_id=wa_id).first()
                 if not contact or str(contact.label).strip().lower() != str(required_label).strip().lower():
-                    print(f"  ⚠️ Keyword matched flow '{flow.name}', but contact '{wa_id}' lacks required label '{required_label}'")
+                    print(f"  Keyword matched flow '{flow.name}', but contact '{wa_id}' lacks required label '{required_label}'")
                     continue
 
-            print(f"  ✅ MATCHED flow '{flow.name}'! Executing nodes...")
+            print(f"  MATCHED flow '{flow.name}'! Executing nodes...")
             client = WhatsAppClient(vendor=flow.vendor)
 
             seq_name = trigger_node.get('data', {}).get('subscribe_sequence')
@@ -388,7 +388,7 @@ class BotFlowProcessor:
                         contact.save(update_fields=['label'])
                         print(f"    INFO: Trigger node removed label from contact {wa_id}")
                 except Exception as e:
-                    print(f"    ⚠️ Error updating label from trigger node: {e}")
+                    print(f"    Error updating label from trigger node: {e}")
 
             next_ids = self._get_next_ids(trigger_node)
             self._walk_and_execute(next_ids, nodes, wa_id, vendor, flow, client)
@@ -433,7 +433,7 @@ class BotFlowProcessor:
         ).lower()
 
         keywords = [k.strip().lower() for k in str(keywords_raw).split(',') if k.strip()]
-        print(f"  📋 Flow '{flow_name}': keywords={keywords}, match={match_type}")
+        print(f"  Flow '{flow_name}': keywords={keywords}, match={match_type}")
 
         for kw in keywords:
             if match_type in ('exact', 'exact keyword match'):
@@ -449,5 +449,5 @@ class BotFlowProcessor:
                 if msg_lower == kw:
                     return True
 
-        print(f"  ❌ No keyword match for flow '{flow_name}'")
+        print(f"  No keyword match for flow '{flow_name}'")
         return False

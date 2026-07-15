@@ -32,14 +32,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS(
-            f'🚀 Sequence Scheduler started. Polling every {POLL_INTERVAL_SECONDS}s...'
+            f'Sequence Scheduler started. Polling every {POLL_INTERVAL_SECONDS}s...'
         ))
         while True:
             try:
                 process_due_sequence_steps.run()
             except Exception as e:
                 logger.error(f'Scheduler error: {e}', exc_info=True)
-                self.stdout.write(self.style.ERROR(f'❌ Scheduler error: {e}'))
+                self.stdout.write(self.style.ERROR(f'Scheduler error: {e}'))
             time.sleep(POLL_INTERVAL_SECONDS)
 
     def _send_delivery(self, delivery):
@@ -71,7 +71,7 @@ class Command(BaseCommand):
             delivery.status = 'failed'
             delivery.error_message = f'Node {node_id} not found in flow {flow.id}'
             delivery.save()
-            self.stdout.write(self.style.ERROR(f'  ❌ Node {node_id} not found'))
+            self.stdout.write(self.style.ERROR(f'  Node {node_id} not found'))
             return
 
         # ── Load vendor credentials ────────────────────────────────────────────
@@ -103,31 +103,31 @@ class Command(BaseCommand):
 
         try:
             if within_24h:
-                # ✅ Within 24h — send as configured (text or template)
+                # Within 24h — send as configured (text or template)
                 if message_type == 'text' and text_body:
                     result = client.send_message(wa_id, text_body)
                     _log_outgoing_message(wa_id, vendor, 'text', text_body, result)
-                    self.stdout.write(f'  ✅ [24h] Sent text to {wa_id}: {text_body[:50]}')
+                    self.stdout.write(f'  [24h] Sent text to {wa_id}: {text_body[:50]}')
                 elif message_type == 'template' and template_name:
                     result = client.send_template_message(wa_id, template_name, template_lang)
                     _log_outgoing_message(wa_id, vendor, 'template', f"Template: {template_name}", result)
-                    self.stdout.write(f'  ✅ [24h] Sent template "{template_name}" to {wa_id}')
+                    self.stdout.write(f'  [24h] Sent template "{template_name}" to {wa_id}')
                 else:
                     delivery.status = 'failed'
                     delivery.error_message = 'No message content configured.'
                     delivery.save()
-                    self.stdout.write(self.style.WARNING(f'  ⚠️  No content for node {node_id}'))
+                    self.stdout.write(self.style.WARNING(f'  No content for node {node_id}'))
                     return
 
             else:
-                # ⛔ Outside 24h — MUST use a template
+                # Outside 24h — MUST use a template
                 # Prefer fallback_template, then fall back to template_name if it's a template type
                 tpl = fallback_template or (template_name if message_type == 'template' else '')
 
                 if tpl:
                     result = client.send_template_message(wa_id, tpl, template_lang)
                     _log_outgoing_message(wa_id, vendor, 'template', f"Template: {tpl}", result)
-                    self.stdout.write(f'  ✅ [OUTSIDE 24h] Sent fallback template "{tpl}" to {wa_id}')
+                    self.stdout.write(f'  [OUTSIDE 24h] Sent fallback template "{tpl}" to {wa_id}')
                 else:
                     delivery.status = 'failed'
                     delivery.error_message = (
@@ -136,7 +136,7 @@ class Command(BaseCommand):
                     )
                     delivery.save()
                     self.stdout.write(self.style.WARNING(
-                        f'  ⚠️  [OUTSIDE 24h] No fallback template for node {node_id} — skipped'
+                        f'  [OUTSIDE 24h] No fallback template for node {node_id} — skipped'
                     ))
                     return
 
@@ -149,10 +149,10 @@ class Command(BaseCommand):
             if pending_remaining == 0:
                 enrollment.status = 'completed'
                 enrollment.save()
-                self.stdout.write(f'  🎉 Enrollment completed for {wa_id}')
+                self.stdout.write(f'  Enrollment completed for {wa_id}')
 
         except Exception as e:
             delivery.status = 'failed'
             delivery.error_message = str(e)
             delivery.save()
-            self.stdout.write(self.style.ERROR(f'  ❌ Failed to send to {wa_id}: {e}'))
+            self.stdout.write(self.style.ERROR(f'  Failed to send to {wa_id}: {e}'))
