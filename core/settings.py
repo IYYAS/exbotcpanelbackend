@@ -140,8 +140,19 @@ AUTH_USER_MODEL = 'users.User'
 # For credentialed requests it's safer to explicitly list allowed origins
 CORS_ALLOW_ALL_ORIGINS = False
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://exbot.excrm.in',
+    'https://exbot.excrm.in',
+    'http://www.exbot.excrm.in',
+    'https://www.exbot.excrm.in',
+]
+
 # Replace or extend these with your frontend origins (Vercel + local dev)
 CORS_ALLOWED_ORIGINS = [
+    'http://exbot.excrm.in',
+    'https://exbot.excrm.in',
+    'http://www.exbot.excrm.in',
+    'https://www.exbot.excrm.in',
     'https://exbotfinal1-yxx4.vercel.app',
     'https://lanette-unmonarchic-contradictorily.ngrok-free.dev',
     'http://localhost:5173',
