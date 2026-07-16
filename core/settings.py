@@ -199,6 +199,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 WHATSAPP_API_VERSION = 'v20.0'
 WHATSAPP_VERIFY_TOKEN = 'service-whatsapp-token'
+PUBLIC_BASE_URL = 'https://text.excrm.in'
 NGROK_URL = 'https://lanette-unmonarchic-contradictorily.ngrok-free.dev'
 
 # Celery Configuration Options

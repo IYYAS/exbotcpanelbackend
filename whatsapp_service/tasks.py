@@ -8,6 +8,7 @@ from .models import ChatbotFlow
 from .flow_engine.engine import FlowEngine, _log_outgoing_message
 from .flow_engine.bot_flow_processor import BotFlowProcessor
 from .models import WhatsAppMessageLog
+from .debug_utils import safe_debug_value
 
 
 def _step_delay_seconds(step):
@@ -65,7 +66,7 @@ def process_due_sequence_steps():
             else:
                 result = client.send_message(sub.contact.wa_id, step.message_body)
                 _log_outgoing_message(sub.contact.wa_id, sub.sequence.vendor, 'text', step.message_body, result)
-            print(f'    Sent sequence message for sub {sub.id}: {step.message_body!r}')
+            print(f'    Sent sequence message for sub {sub.id}: {safe_debug_value(step.message_body)}')
             print(f'    send_message result: {result}')
             # Optional follow-up payload: send extra text and/or media immediately
             try:
@@ -76,13 +77,13 @@ def process_due_sequence_steps():
                     if isinstance(follow, str):
                         result = client.send_message(sub.contact.wa_id, follow)
                         _log_outgoing_message(sub.contact.wa_id, sub.sequence.vendor, 'text', follow, result)
-                        print(f"    Sent follow-up text for sub {sub.id}: {follow!r}")
+                        print(f"    Sent follow-up text for sub {sub.id}: {safe_debug_value(follow)}")
                     elif isinstance(follow, dict):
                         ftext = follow.get('text')
                         if ftext:
                             result = client.send_message(sub.contact.wa_id, ftext)
                             _log_outgoing_message(sub.contact.wa_id, sub.sequence.vendor, 'text', ftext, result)
-                            print(f"    Sent follow-up text for sub {sub.id}: {ftext!r}")
+                            print(f"    Sent follow-up text for sub {sub.id}: {safe_debug_value(ftext)}")
                         # send image/video/audio/document if provided
                         media_id = follow.get('media_id')
                         media_url = follow.get('media_url')

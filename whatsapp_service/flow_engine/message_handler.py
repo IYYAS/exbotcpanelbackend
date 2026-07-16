@@ -7,6 +7,7 @@ from django.utils import timezone
 from .bot_flow_processor import BotFlowProcessor
 from ..models import Contact, WhatsAppMessageLog
 from ..client import WhatsAppClient
+from ..debug_utils import safe_debug_value
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +32,18 @@ class MessageHandler:
         wa_id    = msg.get('from', '')
         msg_type = msg.get('type', 'text')
         msg_id   = msg.get('id', '')
-        print(f"\nMessage from {wa_id}, type={msg_type}, id={msg_id}, vendor={vendor.name if vendor else 'NONE'}")
+        print(f"\nMessage from {safe_debug_value(wa_id)}, type={safe_debug_value(msg_type)}, id={safe_debug_value(msg_id)}, vendor={safe_debug_value(vendor.name if vendor else 'NONE')}")
 
         contact = self._resolve_contact(msg, vendor, wa_id, contacts)
         msg_body, attachment_path = self._extract_body_and_attachment(msg, msg_type, vendor)
 
         # Save the incoming message for the primary vendor
         is_new = self._log_message(msg, vendor, contact, wa_id, msg_type, msg_body, attachment_path)
-        print(f"Primary log saved: vendor={vendor.name if vendor else 'NONE'}, contact={contact}, wa_id={wa_id!r}, msg_id={msg_id!r}")
+        print(f"Primary log saved: vendor={safe_debug_value(vendor.name if vendor else 'NONE')}, contact={safe_debug_value(contact)}, wa_id={safe_debug_value(wa_id)}, msg_id={safe_debug_value(msg_id)}")
         # Also save the same incoming message for other vendors sharing this phone number
         self._log_message_to_shared_vendors(msg, vendor, wa_id, msg_type, msg_body, attachment_path)
         if not is_new:
-            print(f"Duplicate wamid={msg_id!r} — already logged, skipping bot flow")
+            print(f"Duplicate wamid={safe_debug_value(msg_id)} — already logged, skipping bot flow")
             return
 
         self._update_contact_activity(contact)
@@ -292,8 +293,8 @@ class MessageHandler:
                 data={**msg, 'debug_reason': 'missing_message_id'}
             )
             print(
-                f"poda Message logged without wamid: vendor={vendor}, contact={contact}, "
-                f"wa_id={wa_id!r}, type={msg_type}, body={msg_body!r}, "
+                f"poda Message logged without wamid: vendor={safe_debug_value(vendor)}, contact={safe_debug_value(contact)}, "
+                f"wa_id={safe_debug_value(wa_id)}, type={safe_debug_value(msg_type)}, body={safe_debug_value(msg_body)}, "
                 f"log_id={new_log.id}, messaged_at={new_log.messaged_at}"
             )
             return True
@@ -315,14 +316,14 @@ class MessageHandler:
         )
         if created:
             print(
-                f"poda Message logged: vendor={vendor}, contact={contact}, "
-                f"wa_id={wa_id!r}, msg_id={message_id!r}, type={msg_type}, "
-                f"body={msg_body!r}, payload_ts={msg.get('timestamp')!r}, "
+                f"poda Message logged: vendor={safe_debug_value(vendor)}, contact={safe_debug_value(contact)}, "
+                f"wa_id={safe_debug_value(wa_id)}, msg_id={safe_debug_value(message_id)}, type={safe_debug_value(msg_type)}, "
+                f"body={safe_debug_value(msg_body)}, payload_ts={safe_debug_value(msg.get('timestamp'))}, "
                 f"log_id={log.id}, messaged_at={log.messaged_at}"
             )
         else:
             print(
-                f"Duplicate message skipped: wamid={message_id!r}, "
+                f"Duplicate message skipped: wamid={safe_debug_value(message_id)}, "
                 f"existing_log_id={log.id}, messaged_at={log.messaged_at}"
             )
         return created

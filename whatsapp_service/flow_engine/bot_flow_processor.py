@@ -4,6 +4,7 @@ from .engine import FlowEngine
 from ..models import VendorSettings, ChatbotFlow
 from ..client import WhatsAppClient
 from users.models import Vendor
+from ..debug_utils import safe_debug_value
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class BotFlowProcessor:
         msg_lower = msg_body.strip().lower()
         flows = self._get_active_flows(vendor)
 
-        print(f"\nBot flow check: '{msg_body}' (btn_node_id={btn_node_id}) against {flows.count()} active flow(s)")
+        print(f"\nBot flow check: '{safe_debug_value(msg_body)}' (btn_node_id={safe_debug_value(btn_node_id)}) against {flows.count()} active flow(s)")
 
         if btn_node_id:
             self._resume_from_button(wa_id, btn_node_id, flows, vendor)

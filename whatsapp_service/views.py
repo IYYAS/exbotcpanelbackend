@@ -33,6 +33,7 @@ from .client import WhatsAppClient
 from .flow_engine.engine import FlowEngine
 from .flow_engine.bot_flow_processor import BotFlowProcessor
 from .flow_engine.message_handler import MessageHandler
+from .debug_utils import safe_debug_value
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +60,9 @@ class WhatsAppWebhookView(View):
             data = json.loads(request.body)
             print("\n" + "="*80)
             print("[WEBHOOK EVENT RECEIVED FROM META]")
-            print(json.dumps(data, indent=2))
+            print(safe_debug_value(data))
             print("="*80 + "\n")
-            logger.info(f"Unified Webhook POST: {json.dumps(data, indent=2)}")
+            logger.info("Unified Webhook POST: %s", safe_debug_value(data))
 
             # Try to identify vendor from phone_number_id in metadata
             vendor = None
@@ -382,7 +383,7 @@ class TemplateDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, template_name):
-        print("request.data:",request.data)
+        print("request.data:", safe_debug_value(request.data))
         print("template_name:",template_name)
         vendor = request.user.vendor
         if not vendor:
@@ -428,8 +429,8 @@ class MediaUploadAPIView(APIView):
             for chunk in file_obj.chunks():
                 destination.write(chunk)
 
-        base_url = getattr(settings, 'NGROK_URL', request.build_absolute_uri('/'))
-        base_url = base_url.rstrip('/')
+        base_url = getattr(settings, 'PUBLIC_BASE_URL', None) or getattr(settings, 'NGROK_URL', None) or request.build_absolute_uri('/').rstrip('/')
+        base_url = str(base_url).rstrip('/')
         local_url = f"{base_url}{settings.MEDIA_URL}{quote(rel_path.replace(os.sep, '/'))}"
         client = WhatsAppClient(vendor=request.user.vendor)
 
@@ -531,8 +532,12 @@ class SendMessageAPIView(APIView):
         vendor = getattr(request.user, 'vendor', None)
         if not vendor:
             return Response({'error': 'No vendor account associated with this user.'}, status=403)
-        print("SendMessageAPIView request data:", request.data)
-        print(f"SendMessageAPIView: user={request.user} vendor={vendor} to={request.data.get('to_number')} type={request.data.get('type', 'text')} body={request.data.get('body', '')!r}")
+        print("SendMessageAPIView request data:", safe_debug_value(request.data))
+        print(
+            f"SendMessageAPIView: user={safe_debug_value(request.user)} vendor={safe_debug_value(vendor)} "
+            f"to={safe_debug_value(request.data.get('to_number'))} type={safe_debug_value(request.data.get('type', 'text'))} "
+            f"body={safe_debug_value(request.data.get('body', ''))}"
+        )
 
         to_id = request.data.get('to_number')
         body = request.data.get('body', '')

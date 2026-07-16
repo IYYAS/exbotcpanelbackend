@@ -1,6 +1,7 @@
 import httpx
 import logging
 from django.conf import settings
+from .debug_utils import safe_debug_value
 
 logger = logging.getLogger(__name__)
 
@@ -232,8 +233,7 @@ class WhatsAppClient:
         print(f"Phone Number ID: {self.phone_number_id}")
         print(f"To Number: {to_number}")
         print(f"Full Payload Being Sent to Meta:")
-        import json
-        print(json.dumps(payload, indent=2))
+        print(safe_debug_value(payload))
         print("="*80 + "\n")
         
         return self._make_request("POST", f"{self.phone_number_id}/messages", payload)
@@ -328,9 +328,9 @@ class WhatsAppClient:
         print(f"\n{'-'*60}")
         print(f"[Meta API Request] {method} -> {url}")
         if params:
-            print(f"[Query Params] {json.dumps(params, indent=2)}")
+            print(f"[Query Params] {safe_debug_value(params)}")
         if payload:
-            print(f"[Body Payload] {json.dumps(payload, indent=2)}")
+            print(f"[Body Payload] {safe_debug_value(payload)}")
         print(f"{'-'*60}")
 
         headers = self.headers.copy()
@@ -350,7 +350,7 @@ class WhatsAppClient:
                 )
                 print(f"[Meta API Response] Status: {response.status_code}")
                 result = response.json()
-                print(f"[Meta API Response Data] {json.dumps(result, indent=2)}")
+                print(f"[Meta API Response Data] {safe_debug_value(result)}")
                 response.raise_for_status()
                 return result
         except httpx.HTTPStatusError as e:
